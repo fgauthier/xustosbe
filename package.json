@@ -1,0 +1,36 @@
+{
+	"name": "xustosapi",
+	"version": "0.1.0",
+	"description": "A sample Node.js app using Express 4",
+	"main": "index.js",
+	"bin": {
+		"tsc": "node_modules/typescript/bin/tsc"
+	},
+	"scripts": {
+		"start": "node index.js",
+		"lint": "tslint \"src/**/*.ts\"",
+		"tsc": "tsc",
+		"build": "npm run lint;npm run tsc"
+	},
+	"engines": {
+		"node": "4.0.0"
+	},
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/fgauthier/xustosbe.git"
+	},
+	"keywords": [
+		"node"
+	],
+	"author": "Francois Gauthier",
+	"contributors": [],
+	"license": "MIT",
+	"dependencies": {},
+	"devDependencies": {
+		"@types/mocha": "^2.2.42",
+		"@types/node": "^8.0.26",
+		"aws-sdk": "^2.109.0",
+		"tslint": "^5.7.0",
+		"typescript": "^2.5.2"
+	}
+}
