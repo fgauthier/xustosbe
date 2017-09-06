@@ -8,7 +8,7 @@
 		"lint": "tslint \"src/**/*.ts\"",
 		"tsc": "node_modules/typescript/bin/tsc",
 		"build": "npm install;npm run lint;npm run tsc",
-		"prepackage": "npm run build;tar cvf - node_modules | tar xvf - -C dist/js",
+		"prepackage": "npm run build && npm prune --production && tar cvf - node_modules | tar xvf - -C dist/js && npm install",
 		"package:dev": "npm run prepackage;aws --profile xustosdev cloudformation package --template-file cfn/master.yaml --output-template-file dist/master-output.yaml --s3-bucket com-xustos-xustosapi-dev;rm -rf dist/js/node_modules",
 		"package:prod": "npm run prepackage;aws --profile xustosprod cloudformation package --template-file cfn/master.yaml --output-template-file dist/master-output.yaml --s3-bucket com-xustos-xustosapi-prod;rm -rf dist/js/node_modules",
 		"deploy:dev": "aws --profile xustosdev cloudformation deploy --template-file dist/master-output.yaml --stack-name xustosapidev --capabilities CAPABILITY_IAM",
@@ -32,6 +32,7 @@
 		"@types/mocha": "^2.2.42",
 		"@types/node": "^8.0.27",
 		"aws-sdk": "^2.110.0",
+		"go-npm": "^0.1.8",
 		"tslint": "^5.7.0",
 		"typescript": "^2.5.2"
 	}
