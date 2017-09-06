@@ -10,7 +10,12 @@
 		"start": "node index.js",
 		"lint": "tslint \"src/**/*.ts\"",
 		"tsc": "tsc",
-		"build": "npm run lint;npm run tsc"
+		"build": "npm run lint;npm run tsc",
+		"predeploy": "tar cvf - node_modules | tar xvf - -C dist/js",
+		"package:dev": "aws --profile xustosdev cloudformation package --template-file cfn/master.yaml --output-template-file dist/master-output.yaml --s3-bucket com-xustos-xustosapi-dev",
+		"package:prod": "aws --profile xustosprod cloudformation package --template-file cfn/master.yaml --output-template-file dist/master-output.yaml --s3-bucket com-xustos-xustosapi-prod",
+		"deploy:dev": "aws --profile xustosdev cloudformation deploy --template-file dist/master-output.yaml --stack-name xustosapidev --capabilities CAPABILITY_IAM",
+		"deploy:prod": "aws --profile xustosprod cloudformation deploy --template-file dist/master-output.yaml --stack-name xustosapiprod --capabilities CAPABILITY_IAM"
 	},
 	"engines": {
 		"node": "4.0.0"
