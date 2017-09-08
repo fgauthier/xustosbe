@@ -7,7 +7,7 @@ Resources:
       CodeUri: ../dist/js
       Handler: index.handler
       Runtime: nodejs6.10
-      Policies: AWSLambdaDynamoDBExecutionRole
+      Policies: AmazonDynamoDBFullAccess
       Environment:
         Variables: 
           TABLE_NAME: !Ref Table
@@ -24,7 +24,7 @@ Resources:
       CodeUri: ../dist/js
       Handler: index.handler
       Runtime: nodejs6.10
-      Policies: AWSLambdaDynamoDBExecutionRole
+      Policies: AmazonDynamoDBFullAccess
       Environment:
         Variables: 
           TABLE_NAME: !Ref Table
@@ -41,7 +41,7 @@ Resources:
       CodeUri: ../dist/js
       Handler: index.handler
       Runtime: nodejs6.10
-      Policies: AWSLambdaDynamoDBExecutionRole
+      Policies: AmazonDynamoDBFullAccess
       Environment:
         Variables: 
           TABLE_NAME: !Ref Table
@@ -53,4 +53,4 @@ Resources:
             Method: delete
             
   Table:
-    Type: AWS::Serverless::SimpleTable
+    Type: AWS::Serverless::SimpleTable                                          
