@@ -1,5 +1,12 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Transform: AWS::Serverless-2016-10-31
+Parameters:
+  Environment:
+    Type: String
+    Description: The environment for this stack
+    AllowedValues:
+      - dev
+      - prod
 Resources:
   GetFunction:
     Type: AWS::Serverless::Function
@@ -14,6 +21,7 @@ Resources:
       Events:
         GetResource:
           Type: Api
+          RestApiId: !Ref RestApi
           Properties:
             Path: /resource/{resourceId}
             Method: get
@@ -31,6 +39,7 @@ Resources:
       Events:
         PutResource:
           Type: Api
+          RestApiId: !Ref RestApi
           Properties:
             Path: /resource/{resourceId}
             Method: put
@@ -48,9 +57,67 @@ Resources:
       Events:
         PutResource:
           Type: Api
+          RestApiId: !Ref RestApi
           Properties:
             Path: /resource/{resourceId}
             Method: delete
             
   Table:
-    Type: AWS::Serverless::SimpleTable                                          
+    Type: AWS::Serverless::SimpleTable
+  
+  RestApi:
+    Type: AWS::Serverless::Api
+    Properties:
+        StageName: !Ref Environment
+        DefinitionBody:
+          swagger: "2.0"
+          info:
+            version: "1.0"
+            title: "xustosapidev"
+          schemes:
+            - "https"
+          paths:
+            /resource/{resourceId}:
+              get:
+                responses: {}
+                x-amazon-apigateway-integration:
+                  uri: !Join [ "", ["arn:aws:apigateway:", !Ref "AWS::Region", ":lambda:path/2015-03-31/functions/", !GetAtt GetFunction.Arn, "/invocations"] ]
+                  passthroughBehavior: "when_no_match"
+                  httpMethod: "POST"
+                  type: "aws_proxy"
+                security:
+                  - xustos_${Environment}_authorizer: []
+              put:
+                responses: {}
+                x-amazon-apigateway-integration:
+                  uri: !Join [ "", ["arn:aws:apigateway:", !Ref "AWS::Region", ":lambda:path/2015-03-31/functions/", !GetAtt PutFunction.Arn, "/invocations"] ]
+                  passthroughBehavior: "when_no_match"
+                  httpMethod: "POST"
+                  type: "aws_proxy"
+                security:
+                  - xustos_${Environment}_authorizer: []
+              delete:
+                responses: {}
+                x-amazon-apigateway-integration:
+                  uri: !Join [ "", ["arn:aws:apigateway:", !Ref "AWS::Region", ":lambda:path/2015-03-31/functions/", !GetAtt PutFunction.Arn, "/invocations"] ]
+                  passthroughBehavior: "when_no_match"
+                  httpMethod: "POST"
+                  type: "aws_proxy"
+                security:
+                  - xustos_${Environment}_authorizer: []
+          securityDefinitions:
+            xustosdev-user-pool:
+              type: "apiKey"
+              name: "Authorization"
+              in: "header"
+              x-amazon-apigateway-authtype: "cognito_user_pools"
+  CognitoAuthorizer:
+    Type: "AWS::ApiGateway::Authorizer"
+    Properties:
+      RestApiId: !Ref RestApi
+      Type: COGNITO_USER_POOLS
+      Name: !Join [ '_', [ xustos, !Ref Environment, authorizer ] ]
+      IdentitySource: method.request.header.Authorization
+      ProviderARNs:
+        - Fn::ImportValue:
+            !Sub "UserPool::Arn"
