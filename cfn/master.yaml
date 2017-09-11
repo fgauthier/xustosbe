@@ -8,7 +8,7 @@ Parameters:
       - dev
       - prod
 Resources:
-  GetFunction:
+  TopApiFunction:
     Type: AWS::Serverless::Function
     Properties:
       CodeUri: ../dist/js
@@ -18,49 +18,6 @@ Resources:
       Environment:
         Variables: 
           TABLE_NAME: !Ref Table
-      Events:
-        GetResource:
-          Type: Api
-          RestApiId: !Ref RestApi
-          Properties:
-            Path: /resource/{resourceId}
-            Method: get
-          
-  PutFunction:
-    Type: AWS::Serverless::Function
-    Properties:
-      CodeUri: ../dist/js
-      Handler: index.handler
-      Runtime: nodejs6.10
-      Policies: AmazonDynamoDBFullAccess
-      Environment:
-        Variables: 
-          TABLE_NAME: !Ref Table
-      Events:
-        PutResource:
-          Type: Api
-          RestApiId: !Ref RestApi
-          Properties:
-            Path: /resource/{resourceId}
-            Method: put
-          
-  DeleteFunction:
-    Type: AWS::Serverless::Function
-    Properties:
-      CodeUri: ../dist/js
-      Handler: index.handler
-      Runtime: nodejs6.10
-      Policies: AmazonDynamoDBFullAccess
-      Environment:
-        Variables: 
-          TABLE_NAME: !Ref Table
-      Events:
-        PutResource:
-          Type: Api
-          RestApiId: !Ref RestApi
-          Properties:
-            Path: /resource/{resourceId}
-            Method: delete
             
   Table:
     Type: AWS::Serverless::SimpleTable
@@ -81,43 +38,38 @@ Resources:
               get:
                 responses: {}
                 x-amazon-apigateway-integration:
-                  uri: !Join [ "", ["arn:aws:apigateway:", !Ref "AWS::Region", ":lambda:path/2015-03-31/functions/", !GetAtt GetFunction.Arn, "/invocations"] ]
+                  uri: !Join [ "", ["arn:aws:apigateway:", !Ref "AWS::Region", ":lambda:path/2015-03-31/functions/", !GetAtt TopApiFunction.Arn, "/invocations"] ]
                   passthroughBehavior: "when_no_match"
                   httpMethod: "POST"
                   type: "aws_proxy"
                 security:
-                  - xustos_${Environment}_authorizer: []
+                  - cognito_authorizer: []
               put:
                 responses: {}
                 x-amazon-apigateway-integration:
-                  uri: !Join [ "", ["arn:aws:apigateway:", !Ref "AWS::Region", ":lambda:path/2015-03-31/functions/", !GetAtt PutFunction.Arn, "/invocations"] ]
+                  uri: !Join [ "", ["arn:aws:apigateway:", !Ref "AWS::Region", ":lambda:path/2015-03-31/functions/", !GetAtt TopApiFunction.Arn, "/invocations"] ]
                   passthroughBehavior: "when_no_match"
                   httpMethod: "POST"
                   type: "aws_proxy"
                 security:
-                  - xustos_${Environment}_authorizer: []
+                  - cognito_authorizer: []
               delete:
                 responses: {}
                 x-amazon-apigateway-integration:
-                  uri: !Join [ "", ["arn:aws:apigateway:", !Ref "AWS::Region", ":lambda:path/2015-03-31/functions/", !GetAtt PutFunction.Arn, "/invocations"] ]
+                  uri: !Join [ "", ["arn:aws:apigateway:", !Ref "AWS::Region", ":lambda:path/2015-03-31/functions/", !GetAtt TopApiFunction.Arn, "/invocations"] ]
                   passthroughBehavior: "when_no_match"
                   httpMethod: "POST"
                   type: "aws_proxy"
                 security:
-                  - xustos_${Environment}_authorizer: []
+                  - cognito_authorizer: []
           securityDefinitions:
-            xustosdev-user-pool:
+            cognito_authorizer:
               type: "apiKey"
               name: "Authorization"
               in: "header"
               x-amazon-apigateway-authtype: "cognito_user_pools"
-  CognitoAuthorizer:
-    Type: "AWS::ApiGateway::Authorizer"
-    Properties:
-      RestApiId: !Ref RestApi
-      Type: COGNITO_USER_POOLS
-      Name: !Join [ '_', [ xustos, !Ref Environment, authorizer ] ]
-      IdentitySource: method.request.header.Authorization
-      ProviderARNs:
-        - Fn::ImportValue:
-            !Sub "UserPool::Arn"
+              x-amazon-apigateway-authorizer:
+                type: "cognito_user_pools"
+                providerARNs:
+                  - Fn::ImportValue:
+                      !Sub "UserPool::Arn"
