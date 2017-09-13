@@ -149,6 +149,10 @@ Resources:
         unauthenticated: !GetAtt CognitoUnAuthorizedRole.Arn
 
 Outputs:
+  UserPoolId:
+    Value: !Ref UserPool
+    Export:
+      Name: "UserPool::Id"
   UserPoolArn:
     Value: !GetAtt UserPool.Arn
     Export:
