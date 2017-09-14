@@ -76,3 +76,12 @@ Resources:
                 providerARNs:
                   - Fn::ImportValue:
                       !Sub "${IdPoolStack}-UserPool::Arn"
+
+Outputs:
+  RestApiId:
+    Value: !Ref RestApi
+    Export:
+      Name: !Join
+        - ''
+        - - !Ref AWS::StackName
+          - "-RestApi::Id"
