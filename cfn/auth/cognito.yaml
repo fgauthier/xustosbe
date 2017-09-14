@@ -7,28 +7,6 @@ Parameters:
 
 Resources:
 
-  # Creates a role that allows Cognito to send SNS messages
-  SNSRole:
-    Type: "AWS::IAM::Role"
-    Properties:
-      AssumeRolePolicyDocument: 
-        Version: "2012-10-17"
-        Statement:
-          - Effect: "Allow"
-            Principal: 
-              Service: 
-                - "cognito-idp.amazonaws.com"
-            Action: 
-              - "sts:AssumeRole"
-      Policies:
-        - PolicyName: "CognitoSNSPolicy"
-          PolicyDocument: 
-            Version: "2012-10-17"
-            Statement: 
-              - Effect: "Allow"
-                Action: "sns:publish"
-                Resource: "*"
-
   # Creates a user pool in cognito for your app to auth against
   # This example requires MFA and validates the phone number to use as MFA
   # Other fields can be added to the schema
@@ -37,11 +15,7 @@ Resources:
     Properties:
       UserPoolName: !Sub ${AuthName}-user-pool
       AutoVerifiedAttributes:
-        - phone_number
-      MfaConfiguration: "ON"
-      SmsConfiguration:
-        ExternalId: !Sub ${AuthName}-external
-        SnsCallerArn: !GetAtt SNSRole.Arn
+        - email
       Schema:
         - Name: name
           AttributeDataType: String
@@ -51,13 +25,6 @@ Resources:
           AttributeDataType: String
           Mutable: false
           Required: true
-        - Name: phone_number
-          AttributeDataType: String
-          Mutable: false
-          Required: true
-        - Name: slackId
-          AttributeDataType: String
-          Mutable: true
   
   # Creates a User Pool Client to be used by the identity pool
   UserPoolClient:
@@ -152,16 +119,28 @@ Outputs:
   UserPoolId:
     Value: !Ref UserPool
     Export:
-      Name: "UserPool::Id"
+      Name: !Join
+        - ''
+        - - !Ref AWS::StackName
+          - "-UserPool::Id"
   UserPoolArn:
     Value: !GetAtt UserPool.Arn
     Export:
-      Name: "UserPool::Arn"
+      Name: !Join
+        - ''
+        - - !Ref AWS::StackName
+          - "-UserPool::Arn"
   UserPoolClientId:
     Value: !Ref UserPoolClient
     Export:
-      Name: "UserPoolClient::Id"
+      Name: !Join
+        - ''
+        - - !Ref AWS::StackName
+          - "-UserPoolClient::Id"
   IdentityPoolId:
     Value: !Ref IdentityPool
     Export:
-      Name: "IdentityPool::Id"
+      Name: !Join
+        - ''
+        - - !Ref AWS::StackName
+          - "-IdentityPool::Id"

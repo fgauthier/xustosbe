@@ -7,6 +7,9 @@ Parameters:
     AllowedValues:
       - dev
       - prod
+  IdPoolStack:
+    Type: String
+    Description: The name of the id pool stack
 Resources:
   TopApiFunction:
     Type: AWS::Serverless::Function
@@ -72,4 +75,4 @@ Resources:
                 type: "cognito_user_pools"
                 providerARNs:
                   - Fn::ImportValue:
-                      !Sub "UserPool::Arn"
+                      !Sub "${IdPoolStack}-UserPool::Arn"
