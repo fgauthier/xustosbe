@@ -37,26 +37,15 @@ Resources:
           schemes:
             - "https"
           paths:
-            /resource/{resourceId}:
-              get:
-                responses: {}
-                x-amazon-apigateway-integration:
-                  uri: !Join [ "", ["arn:aws:apigateway:", !Ref "AWS::Region", ":lambda:path/2015-03-31/functions/", !GetAtt TopApiFunction.Arn, "/invocations"] ]
-                  passthroughBehavior: "when_no_match"
-                  httpMethod: "POST"
-                  type: "aws_proxy"
-                security:
-                  - cognito_authorizer: []
-              put:
-                responses: {}
-                x-amazon-apigateway-integration:
-                  uri: !Join [ "", ["arn:aws:apigateway:", !Ref "AWS::Region", ":lambda:path/2015-03-31/functions/", !GetAtt TopApiFunction.Arn, "/invocations"] ]
-                  passthroughBehavior: "when_no_match"
-                  httpMethod: "POST"
-                  type: "aws_proxy"
-                security:
-                  - cognito_authorizer: []
-              delete:
+            /{proxy+}:
+              x-amazon-apigateway-any-method:
+                produces:
+                - application/json
+                parameters:
+                - name: proxy
+                  in: path
+                  required: true
+                  type: string
                 responses: {}
                 x-amazon-apigateway-integration:
                   uri: !Join [ "", ["arn:aws:apigateway:", !Ref "AWS::Region", ":lambda:path/2015-03-31/functions/", !GetAtt TopApiFunction.Arn, "/invocations"] ]
@@ -76,6 +65,23 @@ Resources:
                 providerARNs:
                   - Fn::ImportValue:
                       !Sub "${IdPoolStack}-UserPool::Arn"
+          options:
+            consumes:
+            - application/json
+            produces:
+            - application/json
+            responses:
+              200:
+                description: 200 response
+                schema:
+                  $ref: "#/definitions/Empty"
+                headers:
+                  Access-Control-Allow-Origin:
+                    type: string
+                  Access-Control-Allow-Methods:
+                    type: string
+                  Access-Control-Allow-Headers:
+                    type: string
 
 Outputs:
   RestApiId:

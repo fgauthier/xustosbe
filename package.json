@@ -4,7 +4,7 @@
   "description": "A sample Node.js app using Express 4",
   "main": "index.js",
   "scripts": {
-    "start": "node index.js",
+    "start": "node dist/js/app.local.js",
     "lint": "tslint \"src/**/*.ts\"",
     "tsc": "node_modules/typescript/bin/tsc",
     "build": "npm install;npm run lint;npm run tsc",
@@ -28,9 +28,14 @@
   "contributors": [],
   "license": "MIT",
   "dependencies": {
+    "aws-serverless-express": "^3.0.2",
+    "body-parser": "^1.18.2",
+    "express": "^4.15.5",
     "log4js": "^2.3.3"
   },
   "devDependencies": {
+    "@types/aws-serverless-express": "^2.1.1",
+    "@types/express": "^4.0.37",
     "@types/mocha": "^2.2.42",
     "@types/node": "^8.0.27",
     "aws-sdk": "^2.110.0",

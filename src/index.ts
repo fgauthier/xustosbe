@@ -1,5 +1,6 @@
-import * as AWS from "aws-sdk";
+import * as awsExpress from "aws-serverless-express";
 import * as log4js from "log4js";
+import * as App from "./app";
 
 log4js.configure({
   appenders: {out: {type: "stdout"}},
@@ -8,78 +9,14 @@ log4js.configure({
   },
 });
 
-export let handler = (event, context, callback) => {
+const server = awsExpress.createServer(App.app);
+
+exports.handler = (event, context) => {
 
   const logger = log4js.getLogger();
 
-  const tableName = process.env.TABLE_NAME;
-  const resourceId = event.pathParameters.resourceId || false;
-  const dynamodb = new AWS.DynamoDB();
-  switch (event.httpMethod) {
-    case "GET":
-      {
-        const params = {
-          Key: {id: {S: resourceId}},
-          TableName: tableName,
-        };
-        dynamodb.getItem(params, (err, data) => {
-          if (err) {
-            logger.error(err, err.stack); // an error occurred
-            callback(null, {body: err.message, statusCode: 500});
-          } else {
-            logger.info("data: " + data);
-            callback(null, {body: JSON.stringify(data), statusCode: 200});
-          }
-        });
-      }
-      break;
-    case "PUT":
-      try {
-        const value = JSON.parse(event.body);
-        const resource = {
-          id: {S: resourceId},
-          value,
-        };
-        const params = {
-          Item: resource,
-          ReturnConsumedCapacity: "TOTAL",
-          TableName: tableName,
-        };
-        dynamodb.putItem(params, (err, data) => {
-          if (err) {
-            logger.error(err, err.stack); // an error occurred
-            callback(null, {body: err.message, statusCode: 500});
-          } else {
-            logger.info("response: " + data);
-            callback(null, {body: JSON.stringify(data), statusCode: 200});
-          }
-        });
-      } catch (error) {
-        logger.error(error, error.stack); // an error occurred
-        callback(null, {body: error.message, statusCode: 500});
-      }
-      break;
-    case "DELETE":
-      {
-        const params = {
-          Key: {id: {S: resourceId}},
-          TableName: tableName,
-        };
-        dynamodb.deleteItem(params, (err, data) => {
-          if (err) {
-            logger.error(err, err.stack); // an error occurred
-            callback(null, {body: err.message, statusCode: 500});
-          } else {
-            logger.info("response: " + data);
-            callback(null, {body: JSON.stringify(data), statusCode: 200});
-          }
-        });
-      }
-      break;
-    default:
-      // Send HTTP 501: Not Implemented
-      logger.error("Error: unsupported HTTP method (" + event.httpMethod + ")");
-      callback(null, {statusCode: 501});
+  logger.info("EVENT: " + JSON.stringify(event));
 
-  }
+  awsExpress.proxy(server, event, context);
+
 };
