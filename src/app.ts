@@ -4,6 +4,7 @@ import * as awsExpressMiddleware from "aws-serverless-express/middleware";
 import * as bodyParser from "body-parser";
 import * as express from "express";
 import * as log4js from "log4js";
+import * as uuid from "node-uuid";
 
 log4js.configure({
   appenders: {out: {type: "stdout"}},
@@ -21,60 +22,65 @@ export const app = express();
 app.use(awsExpressMiddleware.eventContext({deleteHeaders: false}), bodyParser.json());
 
 const logger = log4js.getLogger();
-
+const UNAUTH = "UNAUTH";
 const tableName = process.env.TABLE_NAME;
 
-const resourcePath = "/resource/:resourceId";
+const resourcePath = "/items/pets";
 
 let dynamodb;
 
 app.get(resourcePath, (req, res) => {
-  const params = {
-    Key: {id: {S: req.params.resourceId}},
+  const anyReq: any = req;
+  // performs a DynamoDB Query operation to extract all records for the cognitoIdentityId in the table
+  getDynamoDB().query({
+    KeyConditions: {
+      userId: {
+        AttributeValueList: [anyReq.apiGateway.event.requestContext.identity.cognitoIdentityId || UNAUTH],
+        ComparisonOperator: "EQ",
+      },
+    },
     TableName: tableName,
-  };
-  if (dynamodb === undefined) {
-    dynamodb = new AWS.DynamoDB();
-  }
-  dynamodb.getItem(params, (err, data) => {
+  }, (err, data) => {
     if (err) {
-      logger.error(err, err.stack); // an error occurred
-      return res.status(500).json(err.message);
+      logger.error(err);
+      res.status(500).json({
+        message: "Could not load pets",
+      }).end();
     } else {
-      logger.info("data: " + data);
-      res.status(200).json(data);
+      res.json(data.Items).end();
     }
   });
 });
 
-app.put(resourcePath, (req, res) => {
-  try {
-    const value = JSON.parse(req.body);
-    const resource = {
-      id: {S: req.params.resourceId},
-      value,
-    };
-    const params = {
-      Item: resource,
-      ReturnConsumedCapacity: "TOTAL",
-      TableName: tableName,
-    };
-    if (dynamodb === undefined) {
-      dynamodb = new AWS.DynamoDB();
-    }
-    dynamodb.putItem(params, (err, data) => {
-      if (err) {
-        logger.error(err, err.stack); // an error occurred
-        return res.status(500).json(err.message);
-      } else {
-        logger.info("response: " + data);
-        res.status(200).json(data);
-      }
-    });
-  } catch (error) {
-    logger.error(error, error.stack); // an error occurred
-    return res.status(500).json(error.message);
+app.post(resourcePath, (req, res) => {
+  if (!req.body.name) {
+    res.status(400).json({
+      message: "You must specify a pet name",
+    }).end();
+    return;
   }
+
+  const pet = {...req.body};
+
+  Object.keys(pet).forEach((key) => (pet[key] === "" && delete pet[key]));
+
+  const anyReq: any = req;
+  pet.userId = anyReq.apiGateway.event.requestContext.identity.cognitoIdentityId || UNAUTH;
+  pet.petId = uuid.v1();
+
+  getDynamoDB().put({
+    Item: pet,
+    TableName: tableName,
+  }, (err, data) => {
+    if (err) {
+      logger.error(err);
+      res.status(500).json({
+        message: "Could not insert pet",
+      }).end();
+    } else {
+      res.json(pet);
+    }
+  });
 });
 
 app.delete(resourcePath, (req, res) => {
@@ -82,10 +88,7 @@ app.delete(resourcePath, (req, res) => {
     Key: {id: {S: req.params.resourceId}},
     TableName: tableName,
   };
-  if (dynamodb === undefined) {
-     dynamodb = new AWS.DynamoDB();
-  }
-  dynamodb.deleteItem(params, (err, data) => {
+  getDynamoDB().deleteItem(params, (err, data) => {
     if (err) {
       logger.error(err, err.stack); // an error occurred
       return res.status(500).json(err.message);
@@ -95,3 +98,10 @@ app.delete(resourcePath, (req, res) => {
     }
   });
 });
+
+const getDynamoDB = () => {
+  if (dynamodb === undefined) {
+    dynamodb = new AWS.DynamoDB.DocumentClient();
+  }
+  return dynamodb;
+};

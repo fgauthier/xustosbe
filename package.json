@@ -31,13 +31,15 @@
     "aws-serverless-express": "^3.0.2",
     "body-parser": "^1.18.2",
     "express": "^4.15.5",
-    "log4js": "^2.3.3"
+    "log4js": "^2.3.3",
+    "node-uuid": "^1.4.8"
   },
   "devDependencies": {
     "@types/aws-serverless-express": "^2.1.1",
     "@types/express": "^4.0.37",
     "@types/mocha": "^2.2.42",
     "@types/node": "^8.0.27",
+    "@types/node-uuid": "0.0.28",
     "aws-sdk": "^2.110.0",
     "go-npm": "^0.1.8",
     "tslint": "^5.7.0",

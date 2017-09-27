@@ -8,12 +8,12 @@ log4js.configure({
   },
 });
 
+const logger = log4js.getLogger();
+
 App.awsconfig.loadFromPath("./.awsconfig.json");
 
 const port = 3000;
 
 App.app.listen(port);
-
-const logger = log4js.getLogger();
 
 logger.info(`listening on http://localhost:${port}`);
